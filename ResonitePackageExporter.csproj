@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AppName>NeosVR</AppName>
 		<AppNameShort>Neos</AppNameShort>
@@ -45,9 +45,20 @@
 		<AppPath Condition="Exists('E:\SteamLibrary\steamapps\common\$(AppName)')">E:\SteamLibrary\steamapps\common\$(AppName)</AppPath>
 		<AppPath Condition="Exists('$(HOME)/.steam/steam/steamapps/common/$(AppName)')">$(HOME)/.steam/steam/steamapps/common/$(AppName)</AppPath>
 		<AppPath Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\$(AppName)')">C:\Program Files (x86)\Steam\steamapps\common\$(AppName)</AppPath>
+		<!-- Neos archive path (e.g. /mnt/4tb/Neos Archive/app) -->
+		<AppPath Condition="Exists('/mnt/4tb/Neos Archive/app/Neos_Data')">/mnt/4tb/Neos Archive/app</AppPath>
 
 		<!--Leaving the trailing \ out for the powershell script later-->
+		<AppData Condition="Exists('$(AppPath)/$(AppNameShort)_Data')">$(AppPath)/$(AppNameShort)_Data/Managed</AppData>
 		<AppData Condition="Exists('$(AppPath)\$(AppNameShort)_Data')">$(AppPath)\$(AppNameShort)_Data\Managed</AppData>
+
+		<!-- Harmony: usually in Libraries; Neos archive may use nml_libs -->
+		<HarmonyPath>$(AppPath)/Libraries</HarmonyPath>
+		<HarmonyPath Condition="Exists('$(AppPath)/nml_libs/0Harmony.dll')">$(AppPath)/nml_libs</HarmonyPath>
+
+		<!-- Fallback for building without Neos installed: copy Neos VR Managed + Libraries into NeosRefs/ -->
+		<AppPath Condition="'$(AppData)' == '' and Exists('$(MSBuildThisFileDirectory)NeosRefs\Managed')">$(MSBuildThisFileDirectory)NeosRefs</AppPath>
+		<AppData Condition="'$(AppData)' == '' and Exists('$(MSBuildThisFileDirectory)NeosRefs\Managed')">$(MSBuildThisFileDirectory)NeosRefs\Managed</AppData>
 
 		<AlternateDataPath>$(AppPath)\Alt</AlternateDataPath>
 		<AlternateDataPath Condition="Exists('$(AppPath)')">$(AppPath)\_altData</AlternateDataPath>
@@ -56,11 +67,20 @@
 	<ItemGroup>
 		<!--Newtonsoft.Json.Bson wants 12+ of Newtonsoft.Json for some reason-->
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<!-- Enables building net472 on Linux/macOS without Windows .NET Framework Developer Pack -->
+		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildTransitive</IncludeAssets>
+		</PackageReference>
+		<!-- System.Text.Json for net472 when not using Neos Managed folder -->
+		<PackageReference Include="System.Text.Json" Version="6.0.11" />
+		<!-- Brotli for importing Resonite packages (main asset is Brotli-compressed) -->
+		<PackageReference Include="BrotliSharpLib" Version="0.3.3" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="HarmonyLib">
-			<HintPath>$(AppPath)\Libraries\0Harmony.dll</HintPath>
+			<HintPath>$(HarmonyPath)/0Harmony.dll</HintPath>
 		</Reference>
 		<Reference Include="FrooxEngine">
 			<HintPath>$(AppData)\FrooxEngine.dll</HintPath>
@@ -77,11 +97,11 @@
 		<Reference Include="LZMA">
 			<HintPath>$(AppData)\LZMA.dll</HintPath>
 		</Reference>
+		<Reference Include="SevenZip">
+			<HintPath>$(AppData)\SevenZip.dll</HintPath>
+		</Reference>
 		<Reference Include="System.Memory">
 			<HintPath>$(AppData)\System.Memory.dll</HintPath>
-		</Reference>
-		<Reference Include="System.Text.Json">
-			<HintPath>$(AppData)\System.Text.Json.dll</HintPath>
 		</Reference>
 		<Reference Include="Newtonsoft.Json.Bson">
 			<HintPath>$(AppData)\Newtonsoft.Json.Bson.dll</HintPath>
@@ -97,11 +117,21 @@
 		</Reference>
 	</ItemGroup>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(CopyToLibraries)'=='true'">
-		<!-- Visual Studio auto converted from '""' to "&quot;&quot;" so I'm not going to fight it on that -->
+	<!-- On Windows with Neos in AppPath: run PostBuild (powershell + copy). On Linux or when using NeosRefs/archive path: skip. -->
+	<!-- Do not copy .pdb to Libraries: Neos PostX can fail with SymbolsNotMatchingException if PDB and DLL get out of sync. -->
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(CopyToLibraries)'=='true' and $([MSBuild]::IsOSPlatform('Windows'))">
 		<Exec Condition="'$(DoAutoPostX)'=='true'" Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.\Scripts\PostBuild.ps1&quot; &quot;$(AppPath)&quot; &quot;$(Configuration)&quot;" />
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AppPath)\Libraries" />
-		<Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(AppPath)\Libraries" />
+		<Delete Condition="Exists('$(AppPath)\Libraries\$(TargetName).pdb')" Files="$(AppPath)\Libraries\$(TargetName).pdb" />
+		<Copy Condition="Exists('$(TargetDir)BrotliSharpLib.dll')" SourceFiles="$(TargetDir)BrotliSharpLib.dll" DestinationFolder="$(AppPath)\Libraries" />
 		<Message Text="Copied $(TargetFileName) to $(AppPath)\Libraries" Importance="high" />
+	</Target>
+
+	<!-- When building against Neos archive path (e.g. on Linux): copy mod into Libraries so you can use -LoadAssembly -->
+	<Target Name="CopyToLibraries" AfterTargets="Build" Condition="Exists('$(AppPath)/Libraries') or Exists('$(AppPath)\Libraries')">
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AppPath)/Libraries" />
+		<Delete Condition="Exists('$(AppPath)/Libraries/$(TargetName).pdb')" Files="$(AppPath)/Libraries/$(TargetName).pdb" />
+		<Copy Condition="Exists('$(TargetDir)BrotliSharpLib.dll')" SourceFiles="$(TargetDir)BrotliSharpLib.dll" DestinationFolder="$(AppPath)/Libraries" />
+		<Message Text="Copied $(TargetFileName) to $(AppPath)/Libraries" Importance="high" />
 	</Target>
 </Project>

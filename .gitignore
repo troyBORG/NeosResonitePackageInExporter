@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Neos refs (copied from Neos install for building without Neos) – keep NeosRefs/README.md
+NeosRefs/Managed/
+NeosRefs/Libraries/

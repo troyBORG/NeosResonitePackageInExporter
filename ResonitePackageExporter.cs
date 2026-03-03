@@ -1,9 +1,12 @@
-﻿using BaseX;
+using BaseX;
 using HarmonyLib;
 using FrooxEngine;
+using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using CloudX.Shared;
 
 namespace ResonitePackageExporter
@@ -14,6 +17,14 @@ namespace ResonitePackageExporter
 
         internal static string version = "0.1.6";
         public static bool UseNewtonsoftJson = true;
+
+        static Exception GetInnermostException(Exception ex)
+        {
+            while (ex is TargetInvocationException tie && tie.InnerException != null)
+                ex = tie.InnerException;
+            return ex;
+        }
+
         public static void Initialize()
         {
             // Print initialization
@@ -32,6 +43,13 @@ namespace ResonitePackageExporter
 
             var exportPrefix = typeof(ResonitePackageExporter).GetMethod(nameof(InjectPackageExportable), BindingFlags.Public | BindingFlags.Static);
             var sortExportPatch = typeof(ResonitePackageExporter).GetMethod(nameof(SortExportables), BindingFlags.Public | BindingFlags.Static);
+
+            // When user opens/drops a .resonitepackage file, run our importer instead of spawning as raw file
+            var importMethod = typeof(UniversalImporter).GetMethod(nameof(UniversalImporter.Import), BindingFlags.Public | BindingFlags.Static, null,
+                new[] { typeof(string), typeof(World), typeof(float3), typeof(floatQ), typeof(bool), typeof(bool) }, null);
+            var importPrefix = typeof(ResonitePackageExporter).GetMethod(nameof(UniversalImportResonitePackagePrefix), BindingFlags.Public | BindingFlags.Static);
+            if (importMethod != null && importPrefix != null)
+                harmony.Patch(importMethod, prefix: new HarmonyMethod(importPrefix));
 
             // Patch methods
             harmony.Patch(export, prefix: new(exportPrefix));
@@ -96,10 +114,110 @@ namespace ResonitePackageExporter
 
                 });
             });
+
+            // Import a Resonite package into Neos (object from .resonitepackage file)
+            DevCreateNewForm.AddAction("ResonitePackage Tools", "Import Resonite Package", s =>
+            {
+                s.StartTask(async () =>
+                {
+                    s.PositionInFrontOfUser(float3.Backward);
+                    Slot root = s;
+
+                    string path = null;
+                    var pathVar = await s.Engine.LocalDB.TryReadVariableAsync<string>("ResonitePackageExporter.ImportPath");
+                    if (pathVar.hasValue && !string.IsNullOrWhiteSpace(pathVar.value))
+                        path = pathVar.value;
+                    if (string.IsNullOrWhiteSpace(path))
+                    {
+                        var fileBrowser = Userspace.Current?.World?.RootSlot?.GetComponentInChildren<FileBrowser>();
+                        string browserPath = fileBrowser?.CurrentPath?.Value;
+                        if (string.IsNullOrWhiteSpace(browserPath))
+                        {
+                            var v = await s.Engine.LocalDB.TryReadVariableAsync<string>("FileBrowser.CurrentPath");
+                            if (v.hasValue) browserPath = v.value;
+                        }
+                        if (!string.IsNullOrWhiteSpace(browserPath))
+                        {
+                            try
+                            {
+                                var files = System.IO.Directory.GetFiles(browserPath, "*.resonitepackage", System.IO.SearchOption.TopDirectoryOnly);
+                                if (files != null && files.Length > 0)
+                                    path = files[0];
+                            }
+                            catch (Exception) { }
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+                    {
+                        DevCreateNewForm.SpawnText(s);
+                        var text = s.GetComponent<TextRenderer>();
+                        text.Text.Value = "No package path. Set variable ResonitePackageExporter.ImportPath to a .resonitepackage file path, or open a folder with a .resonitepackage in File Browser and try again.";
+                        return;
+                    }
+
+                    DevCreateNewForm.SpawnText(s);
+                    var statusText = s.GetComponent<TextRenderer>();
+                    s.World.RunSynchronously(() => statusText.Text.Value = "Importing...");
+
+                    try
+                    {
+                        await PackageImporter.ImportPackageAsync(path, root, (progress, msg) =>
+                        {
+                            var p = progress;
+                            var m = msg;
+                            root.World.RunSynchronously(() => statusText.Text.Value = $"{p * 100f:F0}% - {m}");
+                        });
+                        root.World.RunSynchronously(() => statusText.Text.Value = "Import complete.");
+                        Logger.Log("Resonite package imported: " + path);
+                    }
+                    catch (Exception ex)
+                    {
+                        var errMsg = ex.Message;
+                        root.World.RunSynchronously(() => statusText.Text.Value = "Import failed: " + errMsg);
+                        Logger.Error("Import failed: " + ex);
+                    }
+                });
+            });
         }
 
-        /*[HarmonyPrefix]
-        [HarmonyPatch(typeof(FileBrowser), "CreateNew")]*/
+        /// <summary>
+        /// When user opens or drops a .resonitepackage file (File Browser or drag), run our importer instead of spawning as raw file.
+        /// </summary>
+        public static bool UniversalImportResonitePackagePrefix(string path, World world, float3 position, floatQ rotation, bool silent, bool rawFile, ref Task __result)
+        {
+            if (string.IsNullOrEmpty(path) || !path.EndsWith(".resonitepackage", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (!File.Exists(path))
+                return true;
+
+            string name = Path.GetFileNameWithoutExtension(path);
+            if (string.IsNullOrEmpty(name)) name = "Imported Package";
+
+            __result = world.Coroutines.StartTask(async () =>
+            {
+                await default(ToWorld);
+                Slot slot = world.LocalUserSpace.AddSlot(name, true);
+                slot.GlobalPosition = position;
+                slot.GlobalRotation = rotation;
+                slot.GlobalScale = float3.One;
+                try
+                {
+                    await PackageImporter.ImportPackageAsync(path, slot, null);
+                }
+                catch (Exception ex)
+                {
+                    var inner = GetInnermostException(ex);
+                    Logger.Error("Import Resonite Package failed (file=" + path + "): " + inner);
+                    await default(ToWorld);
+                    DevCreateNewForm.SpawnText(slot);
+                    var text = slot.GetComponent<TextRenderer>();
+                    if (text != null) text.Text.Value = "Import failed: " + inner.Message;
+                }
+            }, null);
+            return false;
+        }
+
         // This is to inject the PackageExportable component before CreateNew method copies Exportables to the Export Dialog
         public static void InjectPackageExportable(FileBrowser __instance, IButton button, ButtonEventData eventData)
         {
