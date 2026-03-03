@@ -1,4 +1,4 @@
-# ResonitePackageExporter
+# NeosResonitePackageInExporter
 
 A plugin for [Neos VR](https://neos.com/) that adds Resonite package **export** and **import**.
 
@@ -32,20 +32,20 @@ From the repo root: **`dotnet build`**. On Windows with Neos in a standard path,
 <details>
 <summary><strong>Install</strong></summary>
 
-1. Put **ResonitePackageExporter.dll** and **0Harmony.dll** in Neos **`Libraries/`**.
+1. Put **NeosResonitePackageInExporter.dll** and **0Harmony.dll** in Neos **`Libraries/`**.
 2. Put **BrotliSharpLib.dll** in **`Libraries/`** (required for import; build copies it automatically).
-3. **Do not** put `ResonitePackageExporter.pdb` in `Libraries/` (can cause PostX symbol errors).
+3. **Do not** put `NeosResonitePackageInExporter.pdb` in `Libraries/` (can cause PostX symbol errors).
 4. Launch Neos with the mod loaded (see below). Harmony is loaded by the mod; you don’t need to load it yourself.
 
 **Launch arguments** (Steam or NeosLauncher). Load NeosModLoader first, then this mod:
 
 ```text
--LoadAssembly Libraries/NeosModLoader.dll -LoadAssembly Libraries/ResonitePackageExporter.dll
+-LoadAssembly Libraries/NeosModLoader.dll -LoadAssembly Libraries/NeosResonitePackageInExporter.dll
 ```
 
 - **Steam:** Right‑click Neos VR → Properties → Launch Options → paste the line.
 - **NeosLauncher:** Use its launch-arguments field.
-- **This mod only (no NML):** `-LoadAssembly Libraries/ResonitePackageExporter.dll`.
+- **This mod only (no NML):** `-LoadAssembly Libraries/NeosResonitePackageInExporter.dll`.
 
 </details>
 
@@ -62,7 +62,7 @@ From the repo root: **`dotnet build`**. On Windows with Neos in a standard path,
 <summary><strong>Usage — Import (Resonite package → Neos)</strong></summary>
 
 - **Drag & drop or File Browser:** Open or drop a **`.resonitepackage`** file. The mod intercepts it and runs the package importer, spawning the object at the drop/open location.
-- **DevCreateNew → ResonitePackage Tools → Import Resonite Package:** Imports using variable `ResonitePackageExporter.ImportPath` or the first `.resonitepackage` in the File Browser’s current folder.
+- **DevCreateNew → ResonitePackage Tools → Import Resonite Package:** Imports using variable `NeosResonitePackageInExporter.ImportPath` or the first `.resonitepackage` in the File Browser’s current folder.
 - Only **object** packages are supported (not full worlds), matching Resonite’s package importer.
 
 **Avatars with SimpleAvatarProtection (Resonite):** If the package was exported from Resonite with [SimpleAvatarProtection](https://wiki.resonite.com/Component:SimpleAvatarProtection) enabled, Neos has no equivalent to Resonite’s “reassign user on package import.” After import you may need to **manually assign or equip** the avatar; the **User** ref and in-tree owner refs may be wrong. Import still succeeds.

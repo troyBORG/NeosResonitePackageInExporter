@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace ResonitePackageExporter.Resonite
+namespace NeosResonitePackageInExporter.Resonite
 {
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     [Serializable]

@@ -10,7 +10,7 @@ using Record = CloudX.Shared.Record;
 using CloudX.Shared;
 using System.Text;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     public class RecordPackage : IDisposable
     {
@@ -279,7 +279,7 @@ namespace ResonitePackageExporter
 
                 //JsonSerializer.Serialize(utf8JsonWriter, metadata);
                 // CloudXInterface.UseNewtonsoftJson Effectively is Ahead-of-time compilation
-                if (ResonitePackageExporter.UseNewtonsoftJson)
+                if (NeosResonitePackageInExporter.UseNewtonsoftJson)
                 {
                     using StreamWriter streamWriter = new(utf8Json, Encoding.UTF8);
                     streamWriter.Write(Newtonsoft.Json.JsonConvert.SerializeObject(metadata));

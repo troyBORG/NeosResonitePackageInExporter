@@ -1,11 +1,11 @@
-﻿using BaseX;
+using BaseX;
 using SevenZip;
 using System.IO;
 using System.Text;
 using System.Reflection;
 using Newtonsoft.Json.Bson;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     public static class DataTreeExportCompatibility
     {

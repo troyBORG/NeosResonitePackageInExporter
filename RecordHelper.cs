@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using CloudX.Shared;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     public static class RecordHelper
     {

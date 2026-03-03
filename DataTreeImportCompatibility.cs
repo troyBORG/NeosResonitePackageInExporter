@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using BrotliSharpLib;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     /// <summary>
     /// Load DataTree from the same FrDT+LZMA+BSON format used by DataTreeExportCompatibility.

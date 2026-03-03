@@ -1,8 +1,8 @@
-﻿
+
 using System;
 using FrooxEngine;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     [ImplementableClass(true)]
     internal class ExecutionHook
@@ -23,7 +23,7 @@ namespace ResonitePackageExporter
                     return;
                 }
 
-                ResonitePackageExporter.Initialize();
+                NeosResonitePackageInExporter.Initialize();
             }
             catch (Exception e)
             {

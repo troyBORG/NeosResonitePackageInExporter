@@ -2,7 +2,7 @@ using System;
 using CloudX.Shared;
 using Newtonsoft.Json;
 
-namespace ResonitePackageExporter.Resonite
+namespace NeosResonitePackageInExporter.Resonite
 {
     public static class RecordConverter
     {

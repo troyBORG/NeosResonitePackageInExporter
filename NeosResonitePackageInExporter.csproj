@@ -3,7 +3,7 @@
 		<AppName>NeosVR</AppName>
 		<AppNameShort>Neos</AppNameShort>
 
-		<Product>ResonitePackageExporter</Product>
+		<Product>NeosResonitePackageInExporter</Product>
 		<Version>0.1.6</Version>
 
 		<Company>New_Project_Final_Final_WIP</Company>
@@ -13,7 +13,7 @@
 		<AssemblyTitle>$(Product)</AssemblyTitle>
 		<AssemblyName>$(Product)</AssemblyName>
 
-		<RootNamespace>ResonitePackageExporter</RootNamespace>
+		<RootNamespace>NeosResonitePackageInExporter</RootNamespace>
 		<ProjectGuid>{E5F0F18C-50AE-4491-AE4B-70FC0DD37FC9}</ProjectGuid>
 	</PropertyGroup>
 

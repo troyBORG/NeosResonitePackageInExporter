@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading.Tasks;
 using CloudX.Shared;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     /// <summary>
     /// Imports a Resonite package (.resonitepackage) into Neos by extracting assets into LocalDB

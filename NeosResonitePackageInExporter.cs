@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using CloudX.Shared;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
-    public static class ResonitePackageExporter
+    public static class NeosResonitePackageInExporter
     {
         public static Harmony harmony;
 
@@ -28,11 +28,11 @@ namespace ResonitePackageExporter
         public static void Initialize()
         {
             // Print initialization
-            Logger.Log($"Initializing ResonitePackageExplorer v{version}");
+            Logger.Log($"Initializing NeosResonitePackageInExporter v{version}");
             Logger.Log($"Using {typeof(System.Text.Json.JsonSerializer).Assembly.FullName}");
             Logger.Log($"Using {typeof(Newtonsoft.Json.JsonSerializer).Assembly.FullName}");
 
-            harmony = new("Neos.ResonitePackageImporter");
+            harmony = new("Neos.NeosResonitePackageInExporter");
             Logger.Log($"Using {typeof(Harmony).Assembly.FullName}");
 
             Logger.Log("Patching Methods");
@@ -41,13 +41,13 @@ namespace ResonitePackageExporter
             var export = typeof(FileBrowser).GetMethod("CreateNew", BindingFlags.NonPublic | BindingFlags.Instance);
             var exportSetup = typeof(ExportDialog).GetMethod(nameof(ExportDialog.Setup), BindingFlags.Public | BindingFlags.Instance);
 
-            var exportPrefix = typeof(ResonitePackageExporter).GetMethod(nameof(InjectPackageExportable), BindingFlags.Public | BindingFlags.Static);
-            var sortExportPatch = typeof(ResonitePackageExporter).GetMethod(nameof(SortExportables), BindingFlags.Public | BindingFlags.Static);
+            var exportPrefix = typeof(NeosResonitePackageInExporter).GetMethod(nameof(InjectPackageExportable), BindingFlags.Public | BindingFlags.Static);
+            var sortExportPatch = typeof(NeosResonitePackageInExporter).GetMethod(nameof(SortExportables), BindingFlags.Public | BindingFlags.Static);
 
             // When user opens/drops a .resonitepackage file, run our importer instead of spawning as raw file
             var importMethod = typeof(UniversalImporter).GetMethod(nameof(UniversalImporter.Import), BindingFlags.Public | BindingFlags.Static, null,
                 new[] { typeof(string), typeof(World), typeof(float3), typeof(floatQ), typeof(bool), typeof(bool) }, null);
-            var importPrefix = typeof(ResonitePackageExporter).GetMethod(nameof(UniversalImportResonitePackagePrefix), BindingFlags.Public | BindingFlags.Static);
+            var importPrefix = typeof(NeosResonitePackageInExporter).GetMethod(nameof(UniversalImportResonitePackagePrefix), BindingFlags.Public | BindingFlags.Static);
             if (importMethod != null && importPrefix != null)
                 harmony.Patch(importMethod, prefix: new HarmonyMethod(importPrefix));
 
@@ -57,7 +57,7 @@ namespace ResonitePackageExporter
 
             Engine.Current.RunPostInit(()=>
             {
-                Logger.Log($"ResonitePackageExporter UseNewtonsoftJson: {UseNewtonsoftJson}");
+                Logger.Log($"NeosResonitePackageInExporter UseNewtonsoftJson: {UseNewtonsoftJson}");
 
                 // CloudXInterface.UseNewtonsoftJson Effectively is Ahead-of-time compilation
                 Logger.Log($"INFO: CloudXInterface UseNewtonsoftJson: {CloudXInterface.UseNewtonsoftJson}");
@@ -124,7 +124,7 @@ namespace ResonitePackageExporter
                     Slot root = s;
 
                     string path = null;
-                    var pathVar = await s.Engine.LocalDB.TryReadVariableAsync<string>("ResonitePackageExporter.ImportPath");
+                    var pathVar = await s.Engine.LocalDB.TryReadVariableAsync<string>("NeosResonitePackageInExporter.ImportPath");
                     if (pathVar.hasValue && !string.IsNullOrWhiteSpace(pathVar.value))
                         path = pathVar.value;
                     if (string.IsNullOrWhiteSpace(path))
@@ -152,7 +152,7 @@ namespace ResonitePackageExporter
                     {
                         DevCreateNewForm.SpawnText(s);
                         var text = s.GetComponent<TextRenderer>();
-                        text.Text.Value = "No package path. Set variable ResonitePackageExporter.ImportPath to a .resonitepackage file path, or open a folder with a .resonitepackage in File Browser and try again.";
+                        text.Text.Value = "No package path. Set variable NeosResonitePackageInExporter.ImportPath to a .resonitepackage file path, or open a folder with a .resonitepackage in File Browser and try again.";
                         return;
                     }
 

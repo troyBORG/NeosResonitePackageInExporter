@@ -18,4 +18,4 @@ if (-not (Test-Path "$OutputLocation")) {
 Add-Type -Path "$($NeosPath)\Neos_Data\Managed\PostX.dll"
 
 #Run PostX Process
-[PostX.NeosAssemblyPostProcessor].GetMethod("Process").Invoke($null, @("$OutputLocation\ResonitePackageExporter.dll", "$OutputLocation"))
+[PostX.NeosAssemblyPostProcessor].GetMethod("Process").Invoke($null, @("$OutputLocation\NeosResonitePackageInExporter.dll", "$OutputLocation"))

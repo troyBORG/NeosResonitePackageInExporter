@@ -2,7 +2,7 @@ using BaseX;
 using System;
 using System.Collections.Generic;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     /// <summary>
     /// Converts a DataTree from Resonite (ProtoFlux) format to NeosVR (LogiX) format

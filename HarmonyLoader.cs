@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Reflection;
 
-namespace ResonitePackageExporter
+namespace NeosResonitePackageInExporter
 {
     internal static class HarmonyLoader
     {

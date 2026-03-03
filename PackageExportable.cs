@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -42,7 +42,7 @@ public class PackageExportable : Component, IExportable, IComponent, IComponentB
             int staticProviders = WorldOptimizer.DeduplicateStaticProviders(World);
             int assets = WorldOptimizer.CleanupAssets(World, true, WorldOptimizer.CleanupMode.MarkNonpersistent);
             
-            ResonitePackageExporter.Logger.Log(string.Format("World Optimized! Deduplicated Materials: {0}, Deduplicated Static Providers: {1}, Cleaned Up Assets: {2}", mats, staticProviders, assets));
+            NeosResonitePackageInExporter.Logger.Log(string.Format("World Optimized! Deduplicated Materials: {0}, Deduplicated Static Providers: {1}, Cleaned Up Assets: {2}", mats, staticProviders, assets));
             
             // Save the world
             savedGraph = World.SaveWorld();
@@ -53,12 +53,12 @@ public class PackageExportable : Component, IExportable, IComponent, IComponentB
         }
 
         // Create record and build the package
-        var record = ResonitePackageExporter.RecordHelper.CreateForObject<CloudX.Shared.Record>(packageExportable.ExportName, packageExportable.LocalUser.UserID ?? packageExportable.LocalUser.MachineID, null);
+        var record = NeosResonitePackageInExporter.RecordHelper.CreateForObject<CloudX.Shared.Record>(packageExportable.ExportName, packageExportable.LocalUser.UserID ?? packageExportable.LocalUser.MachineID, null);
         await new ToBackground();
 
         using FileStream fstream = File.OpenWrite(Path.Combine(folder, Path.ChangeExtension(name, ".resonitepackage")));
 
-        await ResonitePackageExporter.PackageCreator.BuildPackage(packageExportable.Engine, record, savedGraph, fstream, includeVariants);
+        await NeosResonitePackageInExporter.PackageCreator.BuildPackage(packageExportable.Engine, record, savedGraph, fstream, includeVariants);
         return true;
     }
 
